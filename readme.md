@@ -1,7 +1,7 @@
 ##Secure Authentication System - Laravel 
 
 Setting up basic views , controllers and routes .
-[Authentication System Basic Settings]http://kodeinfo.com/?p=220
+http://kodeinfo.com/?p=220
 
 
 Registration Module with Sentry
