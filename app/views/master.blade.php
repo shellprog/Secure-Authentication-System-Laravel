@@ -9,12 +9,24 @@
 		<meta charset="utf-8">
 		<title>KodeInfo Secure Login System</title>
 		<link rel="stylesheet" type="text/css" href="styles.css" />
+		<link rel="stylesheet" type="text/css" href="/zocial/zocial.css" />
 		<!-- Latest compiled and minified CSS -->
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 		<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+		<style type="text/css">
+			.zocial{
+				width: 220px;
+				margin-bottom: 20px;
+			}
+			
+			.zocial a:hover{
+				text-decoration:none;
+				margin-bottom: 20px;
+			}
+		</style>
 
 	</head>
 	<body>

@@ -11,11 +11,154 @@ class LoginController extends BaseController {
 		return View::make('index');
 	}
 
+	public function loginWithSocial($social_provider, $action = "") {
+		// check URL segment
+		if ($action == "auth") {
+
+			// process authentication
+			try {
+				Session::set('provider', $social_provider);
+				Hybrid_Endpoint::process();
+			} catch (Exception $e) {
+				// redirect back to http://URL/social/
+				return Redirect::route('loginWith');
+			}
+			return;
+		}
+
+		try {
+			// create a HybridAuth object
+			$socialAuth = new Hybrid_Auth(app_path() . '/config/hybridauth.php');
+			// authenticate with Provider
+			$provider = $socialAuth -> authenticate($social_provider);
+
+			// fetch user profile
+			$userProfile = $provider -> getUserProfile();
+		} catch(Exception $e) {
+			// exception codes can be found on HybBridAuth's web site
+			Session::flash('error_msg', $e -> getMessage());
+			return Redirect::to('/login');
+		}
+
+		$this -> createOAuthProfile($userProfile);
+
+		return Redirect::to('/');
+	}
+
+	public function createOAuthProfile($userProfile) {
+
+		if (isset($userProfile -> username)){
+			$username = strlen($userProfile -> username) > 0 ? $userProfile -> username : "";
+		}
+		
+		if (isset($userProfile -> screen_name)){
+			$username = strlen($userProfile -> screen_name) > 0 ? $userProfile -> screen_name : "";
+		}
+		
+		if (isset($userProfile -> displayName)){
+			$username = strlen($userProfile -> displayName) > 0 ? $userProfile -> displayName : "";
+		}
+
+		$email = strlen($userProfile -> email) > 0 ? $userProfile -> email : "";
+		$email = strlen($userProfile -> emailVerified) > 0 ? $userProfile -> emailVerified : "";
+
+		$password = $this -> generatePassword();
+
+		if (Profile::where('email', $email) -> count() <= 0) {
+			$user = Sentry::register(array('email' => $email, 'password' => $password), true);
+
+			try {
+				$user_group = Sentry::findGroupById(1);
+			} catch (Cartalyst\Sentry\Groups\GroupNotFoundException $e) {
+				$this -> createGroup('users');
+				$this -> createGroup('admin');
+				$user_group = Sentry::findGroupById(1);
+			}
+
+			$user -> addGroup($user_group);
+
+			$profile = new Profile();
+
+			$profile -> user_id = $user -> getId();
+			$profile -> email = $email;
+			$profile -> username = $username;
+			$profile -> save();
+		}
+		//Login user
+		//Try to authenticate user
+		try {
+			$user = Sentry::findUserByLogin($email);
+
+			$throttle = Sentry::getThrottleProvider() -> findByUserId($user -> id);
+
+			$throttle -> check();
+
+			//Authenticate user
+			$credentials = array('email' => $email, 'password' => Input::get('password'));
+
+			Sentry::login($user, false);
+
+			//At this point we may get many exceptions lets handle all user management and throttle exceptions
+		} catch (Cartalyst\Sentry\Users\LoginRequiredException $e) {
+			Session::flash('error_msg', 'Login field is required.');
+			return Redirect::to('/login');
+		} catch (Cartalyst\Sentry\Users\PasswordRequiredException $e) {
+			Session::flash('error_msg', 'Password field is required.');
+			return Redirect::to('/login');
+		} catch (Cartalyst\Sentry\Users\WrongPasswordException $e) {
+			Session::flash('error_msg', 'Wrong password, try again.');
+			return Redirect::to('/login');
+		} catch (Cartalyst\Sentry\Users\UserNotFoundException $e) {
+			Session::flash('error_msg', 'User was not found.');
+			return Redirect::to('/login');
+		} catch (Cartalyst\Sentry\Users\UserNotActivatedException $e) {
+			Session::flash('error_msg', 'User is not activated.');
+			return Redirect::to('/login');
+		} catch (Cartalyst\Sentry\Throttling\UserSuspendedException $e) {
+			Session::flash('error_msg', 'User is suspended ');
+			return Redirect::to('/login');
+		} catch (Cartalyst\Sentry\Throttling\UserBannedException $e) {
+			Session::flash('error_msg', 'User is banned.');
+			return Redirect::to('/login');
+		}
+
+	}
+
+	public function generatePassword($length = 9, $strength = 4) {
+		$vowels = 'aeiouy';
+		$consonants = 'bcdfghjklmnpqrstvwxz';
+		if ($strength & 1) {
+			$consonants .= 'BCDFGHJKLMNPQRSTVWXZ';
+		}
+		if ($strength & 2) {
+			$vowels .= "AEIOUY";
+		}
+		if ($strength & 4) {
+			$consonants .= '23456789';
+		}
+		if ($strength & 8) {
+			$consonants .= '@#$%';
+		}
+
+		$password = '';
+		$alt = time() % 2;
+		for ($i = 0; $i < $length; $i++) {
+			if ($alt == 1) {
+				$password .= $consonants[(rand() % strlen($consonants))];
+				$alt = 0;
+			} else {
+				$password .= $vowels[(rand() % strlen($vowels))];
+				$alt = 1;
+			}
+		}
+		return $password;
+	}
+
 	//Show login Form
 	public function showLogin() {
 		//Show login is user not loggedin already or else go to dashboard
 		if (Sentry::check()) {
-			return Redirect::to('index');
+			return Redirect::to('/');
 		}
 
 		return View::make('login');
@@ -248,7 +391,7 @@ class LoginController extends BaseController {
 			Session::flash('error_msg', 'User not found');
 			return Redirect::to('/forgotpassword');
 		}
-		
+
 	}
 
 	//Show newpassword Form
@@ -319,7 +462,7 @@ class LoginController extends BaseController {
 			return Redirect::to('/newpassword?email=' . Input::get('email') . '&resetcode=' . Input::get('resetcode')) -> withErrors($v) -> withInput();
 		}
 	}
-	
+
 	public function getLogout() {
 		Sentry::logout();
 		return Redirect::to('/login');

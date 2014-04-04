@@ -1,23 +1,25 @@
 <?php
 
-Route::get('/',array('before' => 'members_auth', 'uses' => 'LoginController@dashboard'));
+Route::get('/', array('before' => 'members_auth', 'uses' => 'LoginController@dashboard'));
 
-Route::get('/login','LoginController@showLogin');
+Route::get('/login', 'LoginController@showLogin');
 
-Route::post('/login','LoginController@storeLogin');
+Route::post('/login', 'LoginController@storeLogin');
 
-Route::get('/logout','LoginController@getLogout');
+Route::get('/logout', 'LoginController@getLogout');
 
-Route::get('/register','LoginController@showRegister');
+Route::get('/register', 'LoginController@showRegister');
 
-Route::post('/register','LoginController@storeRegister');
+Route::post('/register', 'LoginController@storeRegister');
 
-Route::get('/register/{userId}/activate/{activationCode}','LoginController@registerActivate');
+Route::get('/register/{userId}/activate/{activationCode}', 'LoginController@registerActivate');
 
-Route::get('/forgotpassword','LoginController@showForgotpassword');
+Route::get('/forgotpassword', 'LoginController@showForgotpassword');
 
-Route::post('/forgotpassword','LoginController@storeForgotpassword');
+Route::post('/forgotpassword', 'LoginController@storeForgotpassword');
 
-Route::get('/newpassword','LoginController@showNewPassword');
+Route::get('/newpassword', 'LoginController@showNewPassword');
 
-Route::post('/newpassword','LoginController@storeNewPassword');
+Route::post('/newpassword', 'LoginController@storeNewPassword');
+
+Route::get('/social/{provider}/{action?}', array("as" => "loginWith", "uses" => "LoginController@loginWithSocial"));

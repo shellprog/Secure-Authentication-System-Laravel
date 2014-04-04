@@ -41,6 +41,8 @@ Route::filter('members_auth',function(){
 	if(!Sentry::check()){
 		return Redirect::to('/login');
 	}
+	
+	//return Redirect::to('/');
 });
 
 /*

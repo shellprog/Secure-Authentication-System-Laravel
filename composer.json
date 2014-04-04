@@ -6,7 +6,8 @@
 	"require": {
 		"laravel/framework": "4.1.*",
 		"cartalyst/sentry": "2.1.*",
-		"nesbot/Carbon": "*"
+		"nesbot/Carbon": "*",
+		"hybridauth/hybridauth": "dev-master"
 	},
 	"autoload": {
 		"classmap": [
